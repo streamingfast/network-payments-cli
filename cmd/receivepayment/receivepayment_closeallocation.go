@@ -26,6 +26,7 @@ func newCloseAllocationCmd(logger *slog.Logger) *cobra.Command {
 	cmd.Flags().String("private-key-file", "", "the private key file (if not provided, NETWORK_PAYMENT_PRIVATE_KEY env var will be used for the private key value directly)")
 	cmd.Flags().String("allocation-id", "", "the allocation ID to close")
 	cmd.Flags().String("rpc-url", os.Getenv("ARBITRUM_RPC_URL"), "the rpc url. if not provided, will check the ARBITRUM_RPC_URL env var")
+	cmd.Flags().Int64("gas-price", 0, "the gas price to use for the transaction. If 0, the gas price will be fetched from the network")
 
 	return cmd
 }
