@@ -56,9 +56,12 @@ usage:
   serviceName: substreams
   namespace: sf.substreams.rpc.v2.Stream
   network: mainnet
+  uid: 001
 ```
 
-(Note: the contents of the file can vary based on the use case.)
+Note: the contents of the file can vary based on the use case.
+
+*IMPORTANT NOTE*: For security purposes, you should create a new unique manifest for each payment allocation.
 
 Publish it to IPFS:
 
@@ -97,12 +100,14 @@ The payment sender sends 10 GRT to the allocation:
 sendpayment \
   --allocation-id 0x1234 \
   --amount 10 \
+  --deployment-id Qm1234 \
   --private-key-file {path-to-private-key-file} \
   --rpc-url http://{sender-arbitrum-rpc-node}
 ```
 
 **Notes**:
 - `--allocation-id`: The ID of the allocation receiving the payment.
+- `--deployment-id`: The Deployment ID from the manifest.
 - `--private-key-file`: Path to the private key file of the sender. Alternatively, set the `NETWORK_PAYMENT_PRIVATE_KEY` environment variable.
 
 ---

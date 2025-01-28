@@ -117,6 +117,14 @@ func openAllocationE(logger *slog.Logger) func(cmd *cobra.Command, args []string
 }
 
 func allocateCall(ctx context.Context, to string, from string, cli *ethrpc.Client, indexerAddress string, deploymentID string, amt uint64, gasPrice int64) (string, string, error) {
+	isCurated, err := utils.IsCuratedCall(ctx, cli, deploymentID)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to check if curated: %w", err)
+	}
+	if isCurated {
+		return "", "", fmt.Errorf("deployment has curation and cannot be paid to. please use a different deployment and open a new allocation")
+	}
+
 	methodDef, err := eth.NewMethodDef("allocateFrom(address,bytes32,uint256,address,bytes32,bytes)")
 	if err != nil {
 		return "", "", fmt.Errorf("creating method definition: %w", err)
