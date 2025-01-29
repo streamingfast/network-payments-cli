@@ -29,7 +29,7 @@ func newOpenAllocationCmd(logger *slog.Logger) *cobra.Command {
 
 	cmd.Flags().String("private-key-file", "", "the private key file (if not provided, NETWORK_PAYMENT_PRIVATE_KEY env var will be used for the private key value directly)")
 	cmd.Flags().String("indexer-address", "", "the indexer address (note: NOT the operator address)")
-	cmd.Flags().String("deployment-id", "", "the deployment ID of the service being allocated to")
+	cmd.Flags().String("deployment-id", "", "the deployment ID of the service being allocated to. If left empty, a random deployment ID will be generated")
 	cmd.Flags().Uint64("allocation-amount", 0, "the allocation amount in GRT")
 	cmd.Flags().String("rpc-url", os.Getenv("ARBITRUM_RPC_URL"), "the rpc url. if not provided, will check the ARBITRUM_RPC_URL env var")
 	cmd.Flags().Int64("gas-price", 0, "the gas price to use for the transaction. If 0, the gas price will be fetched from the network")
@@ -49,12 +49,17 @@ func openAllocationE(logger *slog.Logger) func(cmd *cobra.Command, args []string
 			return err
 		}
 
-		deploymentID, err := cmd.Flags().GetString("deployment-id")
+		var deploymentID string
+		deploymentID, err = cmd.Flags().GetString("deployment-id")
 		if err != nil {
 			return err
 		}
 		if deploymentID == "" {
-			return fmt.Errorf("deployment ID is required")
+			fmt.Println("No deployment ID provided, generating a random one")
+			deploymentID, err = utils.GenerateDeployment()
+			if err != nil {
+				return fmt.Errorf("generating deployment ID: %w", err)
+			}
 		}
 
 		amount, err := cmd.Flags().GetUint64("allocation-amount")
@@ -104,12 +109,23 @@ func openAllocationE(logger *slog.Logger) func(cmd *cobra.Command, args []string
 
 		rpcClient := ethrpc.NewClient(rpcUrl)
 
+		if deploymentID != "" {
+			isCurated, err := utils.IsCuratedCall(ctx, rpcClient, deploymentID)
+			if err != nil {
+				return fmt.Errorf("failed to check if curated: %w", err)
+			}
+			if isCurated {
+				return fmt.Errorf("deployment has curation and cannot be paid to. please generate a different deployment and open a new allocation")
+			}
+		}
+
 		allocateTrx, allocationID, err := allocateCall(ctx, utils.StakingContractAddress, privateKey.PublicKey().Address().String(), rpcClient, indexerAddress, deploymentID, amount, gasPrice)
 		if err != nil {
 			return err
 		}
 
 		fmt.Println("Allocation created with ID: ", eth.MustNewAddress(allocationID).Pretty())
+		fmt.Println("Deployment ID: ", deploymentID)
 		fmt.Printf("See transaction on arbiscan: %s\n", fmt.Sprintf("https://arbiscan.io/tx/%s", allocateTrx))
 
 		return nil

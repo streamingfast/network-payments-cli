@@ -25,6 +25,7 @@ func newCloseAllocationCmd(logger *slog.Logger) *cobra.Command {
 
 	cmd.Flags().String("private-key-file", "", "the private key file (if not provided, NETWORK_PAYMENT_PRIVATE_KEY env var will be used for the private key value directly)")
 	cmd.Flags().String("allocation-id", "", "the allocation ID to close")
+	cmd.Flags().String("deployment-id", "", "the deployment ID of the service being allocated to. Optional, but recommended to ensure that no curation has been applied to the deployment")
 	cmd.Flags().String("rpc-url", os.Getenv("ARBITRUM_RPC_URL"), "the rpc url. if not provided, will check the ARBITRUM_RPC_URL env var")
 	cmd.Flags().Int64("gas-price", 0, "the gas price to use for the transaction. If 0, the gas price will be fetched from the network")
 
@@ -48,7 +49,12 @@ func closeAllocationE(logger *slog.Logger) func(cmd *cobra.Command, args []strin
 			return err
 		}
 		if allocationID == "" {
-			return fmt.Errorf("deployment ID is required")
+			return fmt.Errorf("allocation ID is required")
+		}
+
+		deploymentID, err := cmd.Flags().GetString("deployment-id")
+		if err != nil {
+			return err
 		}
 
 		gasPrice, err := cmd.Flags().GetInt64("gas-price")
@@ -84,6 +90,16 @@ func closeAllocationE(logger *slog.Logger) func(cmd *cobra.Command, args []strin
 		ctx = utils.WithPrivateKey(ctx, privateKey)
 
 		rpcClient := ethrpc.NewClient(rpcUrl)
+
+		if deploymentID != "" {
+			isCurated, err := utils.IsCuratedCall(ctx, rpcClient, deploymentID)
+			if err != nil {
+				return fmt.Errorf("failed to check if curated: %w", err)
+			}
+			if isCurated {
+				return fmt.Errorf("deployment has curation and cannot be paid to. please generate a different deployment and open a new allocation")
+			}
+		}
 
 		closeTrx, err := closeAllocationCall(ctx, utils.StakingContractAddress, privateKey.PublicKey().Address().String(), rpcClient, allocationID, gasPrice)
 		if err != nil {

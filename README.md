@@ -45,82 +45,46 @@ The typical flow involves three main steps:
 
 ### Example Usage
 
-#### **Step 1**: Publish an IPFS Manifest
-
-Create a manifest file (`manifest.yaml`) with the following content:
-
-```yaml
-specVersion: 0.0.5
-description: "thegraph.market Payment Gateway usage"
-usage:
-  serviceName: substreams
-  namespace: sf.substreams.rpc.v2.Stream
-  network: mainnet
-  uid: 001
-```
-
-Note: the contents of the file can vary based on the use case.
-
-*IMPORTANT NOTE*: For security purposes, you should create a new unique manifest for each payment allocation.
-
-Publish it to IPFS:
-
-```bash
-curl -X POST -F file=@"manifest.yaml" https://api.thegraph.com/ipfs/api/v0/add
-```
-
-The output will include a **Hash** for the uploaded file, such as `Qm1234...`. Use this hash as the Deployment ID for subsequent steps.
-
----
-
-#### **Step 2**: Open an Allocation
+#### **Step 1**: Open an Allocation
 
 The payment receiver opens an allocation for 100 GRT:
 
 ```bash
 receivepayment open-allocation \
-  --deployment-id Qm1234 \
-  --allocation-amount 100 \
-  --indexer-address 0xabcdef1234 \
+  --allocation-amount {amount of GRT to allocate} \
+  --indexer-address {address of the indexer receiving the payment} \
   --private-key-file {path-to-private-key-file} \
-  --rpc-url http://{receiver-arbitrum-rpc-node}
+  --rpc-url http://{arbitrum-rpc-endpoint}
 ```
 
-**Notes**:
-- `--indexer-address`: The address of the indexer receiving the payment.
-- `--private-key-file`: Path to the private key file for the indexer operator. Alternatively, set the `NETWORK_PAYMENT_PRIVATE_KEY` environment variable.
+This will return the `deployment ID` and `allocation ID`, which should be shared with the payment sender.
 
 ---
 
-#### **Step 3**: Send a Payment
+#### **Step 2**: Send a Payment
 
 The payment sender sends 10 GRT to the allocation:
 
 ```bash
 sendpayment \
-  --allocation-id 0x1234 \
-  --amount 10 \
-  --deployment-id Qm1234 \
+  --allocation-id {allocation-id from step 1} \
+  --deployment-id {deploymet-id from step 1} \
   --private-key-file {path-to-private-key-file} \
-  --rpc-url http://{sender-arbitrum-rpc-node}
+  --rpc-url http://{arbitrum-rpc-endpoint} \
+  --amount {amount of GRT to send}
 ```
-
-**Notes**:
-- `--allocation-id`: The ID of the allocation receiving the payment.
-- `--deployment-id`: The Deployment ID from the manifest.
-- `--private-key-file`: Path to the private key file of the sender. Alternatively, set the `NETWORK_PAYMENT_PRIVATE_KEY` environment variable.
-
 ---
 
-#### **Step 4**: Close the Allocation
+#### **Step 3**: Close the Allocation
 
 The payment receiver closes the allocation:
 
 ```bash
 receivepayment close-allocation \
-  --allocation-id 0x1234 \
+  --allocation-id {{allocation-id from step 1}} \
+  --deployment-id {deploymet-id from step 1} \
   --private-key-file {path-to-private-key-file} \
-  --rpc-url http://{receiver-arbitrum-rpc-node}
+  --rpc-url http://{arbitrum-rpc-endpoint}
 ```
 
 **Notes**:

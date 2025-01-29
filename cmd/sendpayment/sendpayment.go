@@ -25,7 +25,7 @@ func newSendPaymentCmd(logger *slog.Logger) *cobra.Command {
 
 	cmd.Flags().String("private-key-file", "", "the sender private key file. (if not provided, NETWORK_PAYMENT_PRIVATE_KEY env var will be used for the private key value directly)")
 	cmd.Flags().String("allocation-id", "", "the allocation ID to pay to")
-	cmd.Flags().String("deployment-id", "", "the deployment ID of the service being allocated to")
+	cmd.Flags().String("deployment-id", "", "the deployment ID of the service being allocated to. Optional, but recommended to ensure that no curation has been applied to the deployment")
 	cmd.Flags().Uint64("amount", 0, "the amount to pay")
 	cmd.Flags().String("rpc-url", os.Getenv("ARBITRUM_RPC_URL"), "the rpc url. if not provided, will check the ARBITRUM_RPC_URL env var")
 	cmd.Flags().Int64("gas-price", 0, "the gas price to use for the transaction. If 0, the gas price will be fetched from the network")
@@ -46,9 +46,6 @@ func sendPaymentE(logger *slog.Logger) func(cmd *cobra.Command, args []string) (
 		deploymentID, err := cmd.Flags().GetString("deployment-id")
 		if err != nil {
 			return err
-		}
-		if deploymentID == "" {
-			return fmt.Errorf("deployment ID is required")
 		}
 
 		amount, err := cmd.Flags().GetUint64("amount")
@@ -102,12 +99,14 @@ func sendPaymentE(logger *slog.Logger) func(cmd *cobra.Command, args []string) (
 			return fmt.Errorf("failed to approve. trx is empty")
 		}
 
-		isCurated, err := utils.IsCuratedCall(ctx, rpcClient, deploymentID)
-		if err != nil {
-			return fmt.Errorf("failed to check if curated: %w", err)
-		}
-		if isCurated {
-			return fmt.Errorf("deployment has curation and cannot be paid to. please use a different deployment and open a new allocation")
+		if deploymentID != "" {
+			isCurated, err := utils.IsCuratedCall(ctx, rpcClient, deploymentID)
+			if err != nil {
+				return fmt.Errorf("failed to check if curated: %w", err)
+			}
+			if isCurated {
+				return fmt.Errorf("deployment has curation and cannot be paid to. please geneate a different deployment and open a new allocation")
+			}
 		}
 
 		collectedTrx, err := collectCall(ctx, utils.StakingContractAddress, senderAddress, rpcClient, allocation, amount)
