@@ -4,6 +4,7 @@ go 1.22.0
 
 require (
 	github.com/ethereum/go-ethereum v1.14.0
+	github.com/google/uuid v1.3.0
 	github.com/multiformats/go-multihash v0.2.3
 	github.com/spf13/cobra v1.8.0
 	github.com/streamingfast/eth-go v0.0.0-20240312122859-216e183c0b7f
