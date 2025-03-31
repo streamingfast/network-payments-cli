@@ -152,7 +152,6 @@ func approveCall(ctx context.Context, to string, from string, cli *ethrpc.Client
 	var gasPriceBigInt *big.Int
 	if gasPrice == 0 {
 		gasPriceBigInt = utils.MustGetGasPrice(ctx, cli)
-		gasPriceBigInt = gasPriceBigInt.Add(gasPriceBigInt, big.NewInt(20000))
 	} else {
 		gasPriceBigInt = big.NewInt(gasPrice)
 	}

@@ -50,6 +50,8 @@ func MustGetGasPrice(ctx context.Context, cli *rpc.Client) *big.Int {
 		panic(err)
 	}
 
+	gasPrice = gasPrice.Add(gasPrice, big.NewInt(50000))
+
 	return gasPrice
 }
 
