@@ -28,7 +28,7 @@ func newSendPaymentCmd(logger *slog.Logger) *cobra.Command {
 	cmd.Flags().String("deployment-id", "", "the deployment ID of the service being allocated to. Optional, but recommended to ensure that no curation has been applied to the deployment")
 	cmd.Flags().Uint64("amount", 0, "the amount to pay")
 	cmd.Flags().String("rpc-url", os.Getenv("ARBITRUM_RPC_URL"), "the rpc url. if not provided, will check the ARBITRUM_RPC_URL env var")
-	cmd.Flags().Int64("gas-price", 0, "the gas price to use for the transaction. If 0, the gas price will be fetched from the network, +20000")
+	cmd.Flags().Int64("gas-price", 0, "the gas price to use for the transaction. If 0, the gas price will be fetched from the network, +300000")
 
 	return cmd
 }

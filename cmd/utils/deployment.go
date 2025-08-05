@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"io"
 	"mime/multipart"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 func GenerateDeployment() (string, error) {
@@ -76,13 +77,12 @@ func uploadFile(fileContents []byte) (string, error) {
 	type uploadResponse struct {
 		Name string `json:"Name"`
 		Hash string `json:"Hash"`
-		Size string `json:"Size"`
 	}
 
 	// Decode JSON response
 	var uploadResp uploadResponse
 	if err := json.Unmarshal(responseBody, &uploadResp); err != nil {
-		return "", fmt.Errorf("error unmarshalling response JSON: %w", err)
+		return "", fmt.Errorf("error unmarshalling response JSON %q, %w", string(responseBody), err)
 	}
 
 	// Return only the Hash field
